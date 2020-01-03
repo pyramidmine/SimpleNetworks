@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
 using System.Reflection;
@@ -9,15 +10,16 @@ using System.Windows.Forms;
 
 namespace SimpleServer
 {
-	public partial class SimpleServerMainForm : Form
+	public partial class SimpleServerMainForm : Form, ILogger
 	{
 		readonly int MAX_LOG_ROWS = 4096;
+
+		Listener listener;
+		List<Session> sessions = new List<Session>();
 
 		Socket socket;
 		Socket clientSocket;
 		SocketAsyncEventArgs saea;
-		AutoResetEvent listenEvent, listenEventStop;
-		Thread listenThread;
 
 		SocketAsyncEventArgs receiveArgs;
 		SocketAsyncEventArgs sendArgs;
@@ -27,7 +29,7 @@ namespace SimpleServer
 			InitializeComponent();
 		}
 
-		void AddLog(string log)
+		public void AddLog(string log)
 		{
 			if (this.ctrlLog.InvokeRequired)
 			{
@@ -48,10 +50,7 @@ namespace SimpleServer
 
 		private void SimpleServerMainForm_FormClosing(object sender, FormClosingEventArgs e)
 		{
-			if (this.listenEventStop != null)
-			{
-				this.listenEventStop.Set();
-			}
+			this.listener?.Stop();
 		}
 
 		private void SimpleServerMainForm_FormClosed(object sender, FormClosedEventArgs e)
@@ -62,18 +61,15 @@ namespace SimpleServer
 		private void buttonListen_Click(object sender, EventArgs e)
 		{
 			AddLog($"{MethodBase.GetCurrentMethod().Name}");
-			
+
+			//
+			// Listen directly
+			//
 			try
 			{
-				this.socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-				this.socket.Bind(new IPEndPoint(IPAddress.Parse(Properties.Settings.Default.ServerIp), Properties.Settings.Default.ServerPort));
-				this.socket.Listen(Properties.Settings.Default.BacklogSize);
-				this.saea = new SocketAsyncEventArgs();
-				this.saea.Completed += new EventHandler<SocketAsyncEventArgs>(AcceptCompleted);
-				this.listenEvent = new AutoResetEvent(false);
-				this.listenEventStop = new AutoResetEvent(false);
-				this.listenThread = new Thread(StartAccept);
-				this.listenThread.Start();
+				this.listener = new Listener(this);
+				this.listener.Completed += new EventHandler<SocketAsyncEventArgs>(ListenCompleted);
+				this.listener.Listen(Properties.Settings.Default.ServerIp, Properties.Settings.Default.ServerPort, Properties.Settings.Default.BacklogSize);
 			}
 			catch (Exception ex)
 			{
@@ -128,78 +124,13 @@ namespace SimpleServer
 			}
 		}
 
-		/// <summary>
-		/// AcceptAsync를 반복하기 위한 래퍼 메서드
-		/// </summary>
-		/// <remarks>
-		/// - AcceptAsync는 비동기 또는 동기로 완료될 수 있음
-		/// - 비동기로 완료되면, 콜백 메서드가 자동으로 호출되며, 이때 다시 AcceptAsync를 호출하면 무한 반복할 수 있으므로 문제 없음
-		/// - 동기로 완료되면, 콜백 메서드가 호출되지 않으며, 수동으로 AcceptAsync를 호출해야 함. 따라서 콜백 메서드만으로 무한 반복할 수 없음
-		/// - 동기 완료를 처리하기 위해 비동기/동기 완료 모두 처리할 수 있도록, 루프를 돌면서 AcceptAsync 호출해서, 비동기 완료는 콜백 메서드가, 동기 완료는 이 메서드에서 처리
-		/// </remarks>
-		void StartAccept()
+		void ListenCompleted(object sender, SocketAsyncEventArgs args)
 		{
-			AddLog($"{MethodBase.GetCurrentMethod().Name}");
+			AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}");
 
-			// 루프와 종료 이벤트
-			int STOP_EVENT_INDEX = 0;
-			WaitHandle[] waitHandles = new WaitHandle[2] { this.listenEventStop, this.listenEvent };
-
-			do
-			{
-				bool pending;
-				try
-				{
-					pending = this.socket.AcceptAsync(this.saea);
-					AddLog($"{MethodBase.GetCurrentMethod().Name}, AcceptAsync()");
-				}
-				catch (Exception ex)
-				{
-					AddLog($"{MethodBase.GetCurrentMethod().Name}, {ex.GetType().Name}, {ex.Message}");
-					continue;
-				}
-
-				// 즉각 완료됐다면 콜백 메서드가 자동으로 호출되지 않으므로 직접 호출해야 함
-				if (!pending)
-				{
-					AcceptCompleted(null, this.saea);
-				}
-			} while (WaitHandle.WaitAny(waitHandles) != STOP_EVENT_INDEX);
-		}
-
-		/// <summary>
-		/// AcceptAsync 호출이 비동기 완료됐을 때 호출되는 콜백 메서드
-		/// </summary>
-		/// <param name="sender"></param>
-		/// <param name="args"></param>
-		void AcceptCompleted(object sender, SocketAsyncEventArgs args)
-		{
-			AddLog($"{MethodBase.GetCurrentMethod().Name}, {args.SocketError.ToString()}");
-
-			try
-			{
-				if (args.SocketError == SocketError.Success)
-				{
-					this.clientSocket = args.AcceptSocket;
-					args.AcceptSocket = null;   // SocketAsyncEventArgs 재활용
-
-					this.receiveArgs = new SocketAsyncEventArgs();
-					this.receiveArgs.SetBuffer(new byte[Properties.Settings.Default.BufferSize], 0, Properties.Settings.Default.BufferSize);
-					this.receiveArgs.AcceptSocket = this.clientSocket;
-					this.receiveArgs.Completed += new EventHandler<SocketAsyncEventArgs>(ReceiveCompleted);
-
-					Task.Factory.StartNew(() => StartReceive(this.receiveArgs));
-				}
-				else
-				{
-					CloseClientSocket(args);
-				}
-			}
-			finally
-			{
-				// 다음 Accept를 받을 수 있도록 이벤트 셋
-				this.listenEvent.Set();
-			}
+			Session session = new Session(args.AcceptSocket, Properties.Settings.Default.BufferSize, this);
+			this.sessions.Add(session);
+			Task.Factory.StartNew(session.StartReceive);
 		}
 
 		void StartConnect(SocketAsyncEventArgs args)
