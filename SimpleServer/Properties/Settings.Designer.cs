@@ -58,5 +58,29 @@ namespace SimpleServer.Properties {
                 this["BacklogSize"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("4")]
+        public ushort DataSize {
+            get {
+                return ((ushort)(this["DataSize"]));
+            }
+            set {
+                this["DataSize"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("32")]
+        public ushort BufferSize {
+            get {
+                return ((ushort)(this["BufferSize"]));
+            }
+            set {
+                this["BufferSize"] = value;
+            }
+        }
     }
 }

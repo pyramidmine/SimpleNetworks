@@ -11,5 +11,11 @@
     <Setting Name="BacklogSize" Type="System.UInt16" Scope="User">
       <Value Profile="(Default)">100</Value>
     </Setting>
+    <Setting Name="DataSize" Type="System.UInt16" Scope="User">
+      <Value Profile="(Default)">4</Value>
+    </Setting>
+    <Setting Name="BufferSize" Type="System.UInt16" Scope="User">
+      <Value Profile="(Default)">32</Value>
+    </Setting>
   </Settings>
 </SettingsFile>
