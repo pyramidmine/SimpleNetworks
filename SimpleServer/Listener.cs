@@ -29,7 +29,7 @@ namespace SimpleServer
 
 		public void Listen(string ip, int port, int backlogSize)
 		{
-			this.logger?.AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}");
+			this.logger?.AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}, IP={ip}, Port={port}, BacklogSize={backlogSize}");
 
 			try
 			{
@@ -44,6 +44,7 @@ namespace SimpleServer
 				this.acceptNextEvent = new AutoResetEvent(false);
 
 				Thread listening = new Thread(StartAccept);
+				listening.IsBackground = true;	// 메인쓰레드가 종료되면 Accept 쓰레드도 종료되도록 설정
 				listening.Start();
 			}
 			catch (Exception ex)
