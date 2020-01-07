@@ -58,39 +58,39 @@ namespace SimpleServer
 
 		private void buttonListen_Click(object sender, EventArgs e)
 		{
-			AddLog($"{MethodBase.GetCurrentMethod().Name}");
+			AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}");
 
 			try
 			{
 				this.listener = new Listener(this);
-				this.listener.Completed += new EventHandler<SocketAsyncEventArgs>(ListenCompleted);
+				this.listener.AcceptedCallback += new EventHandler<SocketAsyncEventArgs>(AcceptedCallback);
 				this.listener.Listen(Properties.Settings.Default.ServerIp, Properties.Settings.Default.ServerPort, Properties.Settings.Default.BacklogSize);
 			}
 			catch (Exception ex)
 			{
-				AddLog($"{MethodBase.GetCurrentMethod().Name}, {ex.GetType().Name}, {ex.Message}");
+				AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}, {ex.GetType().Name}, {ex.Message}");
 			}
 		}
 
 		private void buttonConnect_Click(object sender, EventArgs e)
 		{
-			AddLog($"{MethodBase.GetCurrentMethod().Name}");
+			AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}");
 
 			try
 			{
 				this.connector = new Connector(this);
-				this.connector.Completed += new EventHandler<SocketAsyncEventArgs>(ConnectCompleted);
+				this.connector.ConnectedCallback += new EventHandler<SocketAsyncEventArgs>(ConnectedCallback);
 				this.connector.Connect(Properties.Settings.Default.ServerIp, Properties.Settings.Default.ServerPort);
 			}
 			catch (Exception ex)
 			{
-				AddLog($"{MethodBase.GetCurrentMethod().Name}, {ex.GetType().Name}, {ex.Message}");
+				AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}, {ex.GetType().Name}, {ex.Message}");
 			}
 		}
 
 		private void buttonSend_Click(object sender, EventArgs e)
 		{
-			AddLog($"{MethodBase.GetCurrentMethod().Name}");
+			AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}");
 
 			try
 			{
@@ -105,33 +105,56 @@ namespace SimpleServer
 				}
 				else
 				{
-					AddLog($"{MethodBase.GetCurrentMethod().Name}, Session is null.");
+					AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}, Session is null.");
 				}
 			}
 			catch (Exception ex)
 			{
-				AddLog($"{MethodBase.GetCurrentMethod().Name}, {ex.GetType().Name}, {ex.Message}");
+				AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}, {ex.GetType().Name}, {ex.Message}");
 			}
 		}
 
-		void ListenCompleted(object sender, SocketAsyncEventArgs args)
+		private void buttonDisconnect_Click(object sender, EventArgs e)
 		{
-			AddLog($"{MethodBase.GetCurrentMethod().Name}");
+			AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}");
+
+			if (this.session != null)
+			{
+				this.session.Disconnect();
+			}
+			else
+			{
+				lock (this.sessions)
+				{
+					foreach (var s in this.sessions)
+					{
+						s.Disconnect();
+					}
+				}
+			}
+		}
+
+		void AcceptedCallback(object sender, SocketAsyncEventArgs args)
+		{
+			AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}");
 
 			Session newSession = new Session(args.AcceptSocket, Properties.Settings.Default.BufferSize, this);
 			newSession.ClosedCallback += new EventHandler<SocketAsyncEventArgs>(ClosedCallback);
 			this.sessions.Add(newSession);
-			AddLog($"{MethodBase.GetCurrentMethod().Name}, Session={newSession.GetHashCode()}, Accepted.");
+			AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}, Session={newSession.GetHashCode()}, Accepted.");
 			Task.Factory.StartNew(newSession.StartReceive);
 		}
 
-		void ConnectCompleted(object sender, SocketAsyncEventArgs args)
+		void ConnectedCallback(object sender, SocketAsyncEventArgs args)
 		{
-			AddLog($"{MethodBase.GetCurrentMethod().Name}, SocketError={args.SocketError}");
+			AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}, SocketError={args.SocketError}");
 
 			if (args.SocketError == SocketError.Success)
 			{
 				this.session = new Session(args.ConnectSocket, Properties.Settings.Default.BufferSize, this);
+				this.session.ReceivedCallback += new EventHandler<SocketAsyncEventArgs>(ReceivedCallback);
+				this.session.SentCallback += new EventHandler<SocketAsyncEventArgs>(SentCallback);
+				this.session.ClosedCallback += new EventHandler<SocketAsyncEventArgs>(ClosedCallback);
 				Task.Factory.StartNew(this.session.StartReceive);
 			}
 			else
@@ -147,109 +170,26 @@ namespace SimpleServer
 			}
 		}
 
-		void StartReceive(SocketAsyncEventArgs args)
+		void ReceivedCallback(object sender, SocketAsyncEventArgs args)
 		{
-			AddLog($"{MethodBase.GetCurrentMethod().Name}");
-
-			try
-			{
-				bool pending = args.AcceptSocket.ReceiveAsync(args);
-				if (!pending)
-				{
-					ReceiveCompleted(null, args);
-				}
-			}
-			catch (Exception ex)
-			{
-				AddLog($"{MethodBase.GetCurrentMethod().Name}, {ex.GetType().Name}, {ex.Message}");
-			}
+			AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}, SocketError={args.SocketError}, BytesTransferred={args.BytesTransferred}");
 		}
 
-		void ReceiveCompleted(object sender, SocketAsyncEventArgs args)
+		void SentCallback(object sender, SocketAsyncEventArgs args)
 		{
-			AddLog($"{MethodBase.GetCurrentMethod().Name}");
-
-			if (args.SocketError != SocketError.Success)
-			{
-				AddLog($"{MethodBase.GetCurrentMethod().Name}, Close socket: SocketError={args.SocketError}");
-				CloseClientSocket(args);
-				return;
-			}
-
-			if (args.BytesTransferred == 0)
-			{
-				AddLog($"{MethodBase.GetCurrentMethod().Name}, Close socket: BytesTransferred=0");
-				CloseClientSocket(args);
-				return;
-			}
-
-			// 패킷 표시용 스트링
-			StringBuilder sb = new StringBuilder(args.BytesTransferred * 2);
-			for (int i = 0; i < args.BytesTransferred; i++)
-			{
-				sb.AppendFormat($"{args.Buffer[i]:x2}");
-			}
-
-			AddLog($"{MethodBase.GetCurrentMethod().Name}, BytesTransferred={args.BytesTransferred}, Packet={sb.ToString()}");
-			StartReceive(args);
-		}
-
-		void StartSend(SocketAsyncEventArgs args)
-		{
-			AddLog($"{MethodBase.GetCurrentMethod().Name}");
-
-			try
-			{
-				bool pending = args.AcceptSocket.SendAsync(args);
-				if (!pending)
-				{
-					SendCompleted(null, args);
-				}
-			}
-			catch (Exception ex)
-			{
-				AddLog($"{MethodBase.GetCurrentMethod().Name}, {ex.GetType().Name}, {ex.Message}");
-				CloseClientSocket(args);
-			}
-		}
-
-		void SendCompleted(object sender, SocketAsyncEventArgs args)
-		{
-			AddLog($"{MethodBase.GetCurrentMethod().Name}, SocketError={args.SocketError}, BytesTransferred={args.BytesTransferred}");
+			AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}, SocketError={args.SocketError}, BytesTransferred={args.BytesTransferred}");
 		}
 
 		void ClosedCallback(object sender, SocketAsyncEventArgs args)
 		{
-			AddLog($"{MethodBase.GetCurrentMethod().Name}");
+			AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}");
 
 			Session closedSession = (Session)sender;
 			if (this.sessions.Remove(closedSession))
 			{
-				AddLog($"{MethodBase.GetCurrentMethod().Name}, Session={closedSession.GetHashCode()}, Closed.");
+				AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}, Session={closedSession.GetHashCode()}, Closed.");
 			}
 		}
 
-		/// <summary>
-		/// 클라이언트 소켓을 닫고 관련된 자원을 해제
-		/// </summary>
-		/// <param name="args"></param>
-		void CloseClientSocket(SocketAsyncEventArgs args)
-		{
-			AddLog($"{MethodBase.GetCurrentMethod().Name}");
-
-			try
-			{
-				args.AcceptSocket.Shutdown(SocketShutdown.Both);
-			}
-			catch (Exception ex)
-			{
-				AddLog($"{MethodBase.GetCurrentMethod().Name}, Ignored, {ex.GetType().Name}, {ex.Message}");
-			}
-
-			if (args.AcceptSocket != null)
-			{
-				args.AcceptSocket.Close();
-			}
-		}
 	}
 }

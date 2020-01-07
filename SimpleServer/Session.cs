@@ -11,6 +11,7 @@ namespace SimpleServer
 	class Session
 	{
 		public event EventHandler<SocketAsyncEventArgs> ReceivedCallback;
+		public event EventHandler<SocketAsyncEventArgs> SentCallback;
 		public event EventHandler<SocketAsyncEventArgs> ClosedCallback;
 
 		SocketAsyncEventArgs receiveArgs;
@@ -122,6 +123,8 @@ namespace SimpleServer
 				return;
 			}
 
+			this.SentCallback?.Invoke(this, args);
+
 			// 패킷 표시용 스트링
 			StringBuilder sb = new StringBuilder(args.BytesTransferred * 2);
 			for (int i = 0; i < args.BytesTransferred; i++)
@@ -129,6 +132,22 @@ namespace SimpleServer
 				sb.AppendFormat($"{args.Buffer[i]:x2}");
 			}
 			this.logger?.AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}, BytesTransferred={args.BytesTransferred}, Packet={sb.ToString()}");
+		}
+
+		public void Disconnect()
+		{
+			this.logger?.AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}");
+
+			try
+			{
+				this.receiveArgs.AcceptSocket?.Shutdown(SocketShutdown.Both);
+				this.logger?.AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}, Shutdown, Socket={this.receiveArgs.AcceptSocket?.GetHashCode()}");
+			}
+			catch
+			{
+			}
+			this.receiveArgs.AcceptSocket?.Close();
+			this.logger?.AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}, Close, Socket={this.receiveArgs.AcceptSocket?.GetHashCode()}");
 		}
 
 		void CloseClientSocket(SocketAsyncEventArgs args)

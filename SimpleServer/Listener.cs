@@ -12,7 +12,7 @@ namespace SimpleServer
 {
 	public class Listener
 	{
-		public event EventHandler<SocketAsyncEventArgs> Completed;
+		public event EventHandler<SocketAsyncEventArgs> AcceptedCallback;
 
 		ILogger logger;
 		Socket listenSocket;
@@ -95,7 +95,7 @@ namespace SimpleServer
 
 					SocketAsyncEventArgs newArgs = new SocketAsyncEventArgs();
 					newArgs.AcceptSocket = socket;
-					this.Completed?.Invoke(this, newArgs);
+					this.AcceptedCallback?.Invoke(this, newArgs);
 				}
 				else
 				{

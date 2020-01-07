@@ -30,28 +30,29 @@
 		{
 			this.ctrlLog = new System.Windows.Forms.ListBox();
 			this.groupBoxServer = new System.Windows.Forms.GroupBox();
+			this.ctrlBacklogSize = new System.Windows.Forms.NumericUpDown();
 			this.label1 = new System.Windows.Forms.Label();
+			this.ctrlServerPort = new System.Windows.Forms.NumericUpDown();
 			this.labelServerPort = new System.Windows.Forms.Label();
+			this.ctrlServerIp = new System.Windows.Forms.TextBox();
 			this.labelServerIp = new System.Windows.Forms.Label();
 			this.groupBoxData = new System.Windows.Forms.GroupBox();
+			this.ctrlBufferSize = new System.Windows.Forms.NumericUpDown();
+			this.labelBufferSize = new System.Windows.Forms.Label();
+			this.ctrlDataSize = new System.Windows.Forms.NumericUpDown();
+			this.labelDataSize = new System.Windows.Forms.Label();
 			this.groupBoxSocket = new System.Windows.Forms.GroupBox();
+			this.buttonSend = new System.Windows.Forms.Button();
 			this.buttonConnect = new System.Windows.Forms.Button();
 			this.buttonListen = new System.Windows.Forms.Button();
-			this.labelDataSize = new System.Windows.Forms.Label();
-			this.buttonSend = new System.Windows.Forms.Button();
-			this.labelBufferSize = new System.Windows.Forms.Label();
-			this.ctrlBufferSize = new System.Windows.Forms.NumericUpDown();
-			this.ctrlDataSize = new System.Windows.Forms.NumericUpDown();
-			this.ctrlBacklogSize = new System.Windows.Forms.NumericUpDown();
-			this.ctrlServerPort = new System.Windows.Forms.NumericUpDown();
-			this.ctrlServerIp = new System.Windows.Forms.TextBox();
+			this.buttonDisconnect = new System.Windows.Forms.Button();
 			this.groupBoxServer.SuspendLayout();
-			this.groupBoxData.SuspendLayout();
-			this.groupBoxSocket.SuspendLayout();
-			((System.ComponentModel.ISupportInitialize)(this.ctrlBufferSize)).BeginInit();
-			((System.ComponentModel.ISupportInitialize)(this.ctrlDataSize)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.ctrlBacklogSize)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.ctrlServerPort)).BeginInit();
+			this.groupBoxData.SuspendLayout();
+			((System.ComponentModel.ISupportInitialize)(this.ctrlBufferSize)).BeginInit();
+			((System.ComponentModel.ISupportInitialize)(this.ctrlDataSize)).BeginInit();
+			this.groupBoxSocket.SuspendLayout();
 			this.SuspendLayout();
 			// 
 			// ctrlLog
@@ -81,144 +82,6 @@
 			this.groupBoxServer.TabStop = false;
 			this.groupBoxServer.Text = "Server";
 			// 
-			// label1
-			// 
-			this.label1.AutoSize = true;
-			this.label1.Location = new System.Drawing.Point(257, 21);
-			this.label1.Name = "label1";
-			this.label1.Size = new System.Drawing.Size(83, 12);
-			this.label1.TabIndex = 0;
-			this.label1.Text = "Backlog Size:";
-			// 
-			// labelServerPort
-			// 
-			this.labelServerPort.AutoSize = true;
-			this.labelServerPort.Location = new System.Drawing.Point(149, 21);
-			this.labelServerPort.Name = "labelServerPort";
-			this.labelServerPort.Size = new System.Drawing.Size(31, 12);
-			this.labelServerPort.TabIndex = 0;
-			this.labelServerPort.Text = "Port:";
-			// 
-			// labelServerIp
-			// 
-			this.labelServerIp.AutoSize = true;
-			this.labelServerIp.Location = new System.Drawing.Point(7, 21);
-			this.labelServerIp.Name = "labelServerIp";
-			this.labelServerIp.Size = new System.Drawing.Size(20, 12);
-			this.labelServerIp.TabIndex = 0;
-			this.labelServerIp.Text = "IP:";
-			// 
-			// groupBoxData
-			// 
-			this.groupBoxData.Controls.Add(this.ctrlBufferSize);
-			this.groupBoxData.Controls.Add(this.labelBufferSize);
-			this.groupBoxData.Controls.Add(this.ctrlDataSize);
-			this.groupBoxData.Controls.Add(this.labelDataSize);
-			this.groupBoxData.Location = new System.Drawing.Point(12, 345);
-			this.groupBoxData.Name = "groupBoxData";
-			this.groupBoxData.Size = new System.Drawing.Size(514, 100);
-			this.groupBoxData.TabIndex = 2;
-			this.groupBoxData.TabStop = false;
-			this.groupBoxData.Text = "Data";
-			// 
-			// groupBoxSocket
-			// 
-			this.groupBoxSocket.Controls.Add(this.buttonSend);
-			this.groupBoxSocket.Controls.Add(this.buttonConnect);
-			this.groupBoxSocket.Controls.Add(this.buttonListen);
-			this.groupBoxSocket.Location = new System.Drawing.Point(12, 452);
-			this.groupBoxSocket.Name = "groupBoxSocket";
-			this.groupBoxSocket.Size = new System.Drawing.Size(514, 100);
-			this.groupBoxSocket.TabIndex = 3;
-			this.groupBoxSocket.TabStop = false;
-			this.groupBoxSocket.Text = "Socket";
-			// 
-			// buttonConnect
-			// 
-			this.buttonConnect.Location = new System.Drawing.Point(7, 51);
-			this.buttonConnect.Name = "buttonConnect";
-			this.buttonConnect.Size = new System.Drawing.Size(75, 23);
-			this.buttonConnect.TabIndex = 8;
-			this.buttonConnect.Text = "Connect";
-			this.buttonConnect.UseVisualStyleBackColor = true;
-			this.buttonConnect.Click += new System.EventHandler(this.buttonConnect_Click);
-			// 
-			// buttonListen
-			// 
-			this.buttonListen.Location = new System.Drawing.Point(7, 20);
-			this.buttonListen.Name = "buttonListen";
-			this.buttonListen.Size = new System.Drawing.Size(75, 23);
-			this.buttonListen.TabIndex = 6;
-			this.buttonListen.Text = "Listen";
-			this.buttonListen.UseVisualStyleBackColor = true;
-			this.buttonListen.Click += new System.EventHandler(this.buttonListen_Click);
-			// 
-			// labelDataSize
-			// 
-			this.labelDataSize.AutoSize = true;
-			this.labelDataSize.Location = new System.Drawing.Point(7, 48);
-			this.labelDataSize.Name = "labelDataSize";
-			this.labelDataSize.Size = new System.Drawing.Size(34, 12);
-			this.labelDataSize.TabIndex = 0;
-			this.labelDataSize.Text = "Size:";
-			// 
-			// buttonSend
-			// 
-			this.buttonSend.Location = new System.Drawing.Point(89, 20);
-			this.buttonSend.Name = "buttonSend";
-			this.buttonSend.Size = new System.Drawing.Size(75, 23);
-			this.buttonSend.TabIndex = 7;
-			this.buttonSend.Text = "Send";
-			this.buttonSend.UseVisualStyleBackColor = true;
-			this.buttonSend.Click += new System.EventHandler(this.buttonSend_Click);
-			// 
-			// labelBufferSize
-			// 
-			this.labelBufferSize.AutoSize = true;
-			this.labelBufferSize.Location = new System.Drawing.Point(7, 21);
-			this.labelBufferSize.Name = "labelBufferSize";
-			this.labelBufferSize.Size = new System.Drawing.Size(70, 12);
-			this.labelBufferSize.TabIndex = 5;
-			this.labelBufferSize.Text = "Buffer Size:";
-			// 
-			// ctrlBufferSize
-			// 
-			this.ctrlBufferSize.DataBindings.Add(new System.Windows.Forms.Binding("Value", global::SimpleServer.Properties.Settings.Default, "BufferSize", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-			this.ctrlBufferSize.Location = new System.Drawing.Point(83, 19);
-			this.ctrlBufferSize.Maximum = new decimal(new int[] {
-            65536,
-            0,
-            0,
-            0});
-			this.ctrlBufferSize.Minimum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-			this.ctrlBufferSize.Name = "ctrlBufferSize";
-			this.ctrlBufferSize.Size = new System.Drawing.Size(80, 21);
-			this.ctrlBufferSize.TabIndex = 4;
-			this.ctrlBufferSize.Value = global::SimpleServer.Properties.Settings.Default.BufferSize;
-			// 
-			// ctrlDataSize
-			// 
-			this.ctrlDataSize.DataBindings.Add(new System.Windows.Forms.Binding("Value", global::SimpleServer.Properties.Settings.Default, "DataSize", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
-			this.ctrlDataSize.Location = new System.Drawing.Point(83, 46);
-			this.ctrlDataSize.Maximum = new decimal(new int[] {
-            65536,
-            0,
-            0,
-            0});
-			this.ctrlDataSize.Minimum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
-			this.ctrlDataSize.Name = "ctrlDataSize";
-			this.ctrlDataSize.Size = new System.Drawing.Size(80, 21);
-			this.ctrlDataSize.TabIndex = 5;
-			this.ctrlDataSize.Value = global::SimpleServer.Properties.Settings.Default.DataSize;
-			// 
 			// ctrlBacklogSize
 			// 
 			this.ctrlBacklogSize.DataBindings.Add(new System.Windows.Forms.Binding("Value", global::SimpleServer.Properties.Settings.Default, "BacklogSize", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
@@ -244,6 +107,15 @@
 			this.ctrlBacklogSize.ThousandsSeparator = true;
 			this.ctrlBacklogSize.Value = global::SimpleServer.Properties.Settings.Default.BacklogSize;
 			// 
+			// label1
+			// 
+			this.label1.AutoSize = true;
+			this.label1.Location = new System.Drawing.Point(257, 21);
+			this.label1.Name = "label1";
+			this.label1.Size = new System.Drawing.Size(83, 12);
+			this.label1.TabIndex = 0;
+			this.label1.Text = "Backlog Size:";
+			// 
 			// ctrlServerPort
 			// 
 			this.ctrlServerPort.DataBindings.Add(new System.Windows.Forms.Binding("Value", global::SimpleServer.Properties.Settings.Default, "ServerPort", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
@@ -258,6 +130,15 @@
 			this.ctrlServerPort.TabIndex = 2;
 			this.ctrlServerPort.Value = global::SimpleServer.Properties.Settings.Default.ServerPort;
 			// 
+			// labelServerPort
+			// 
+			this.labelServerPort.AutoSize = true;
+			this.labelServerPort.Location = new System.Drawing.Point(149, 21);
+			this.labelServerPort.Name = "labelServerPort";
+			this.labelServerPort.Size = new System.Drawing.Size(31, 12);
+			this.labelServerPort.TabIndex = 0;
+			this.labelServerPort.Text = "Port:";
+			// 
 			// ctrlServerIp
 			// 
 			this.ctrlServerIp.DataBindings.Add(new System.Windows.Forms.Binding("Text", global::SimpleServer.Properties.Settings.Default, "ServerIp", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
@@ -266,6 +147,137 @@
 			this.ctrlServerIp.Size = new System.Drawing.Size(110, 21);
 			this.ctrlServerIp.TabIndex = 1;
 			this.ctrlServerIp.Text = global::SimpleServer.Properties.Settings.Default.ServerIp;
+			// 
+			// labelServerIp
+			// 
+			this.labelServerIp.AutoSize = true;
+			this.labelServerIp.Location = new System.Drawing.Point(7, 21);
+			this.labelServerIp.Name = "labelServerIp";
+			this.labelServerIp.Size = new System.Drawing.Size(20, 12);
+			this.labelServerIp.TabIndex = 0;
+			this.labelServerIp.Text = "IP:";
+			// 
+			// groupBoxData
+			// 
+			this.groupBoxData.Controls.Add(this.ctrlBufferSize);
+			this.groupBoxData.Controls.Add(this.labelBufferSize);
+			this.groupBoxData.Controls.Add(this.ctrlDataSize);
+			this.groupBoxData.Controls.Add(this.labelDataSize);
+			this.groupBoxData.Location = new System.Drawing.Point(12, 345);
+			this.groupBoxData.Name = "groupBoxData";
+			this.groupBoxData.Size = new System.Drawing.Size(514, 100);
+			this.groupBoxData.TabIndex = 2;
+			this.groupBoxData.TabStop = false;
+			this.groupBoxData.Text = "Data";
+			// 
+			// ctrlBufferSize
+			// 
+			this.ctrlBufferSize.DataBindings.Add(new System.Windows.Forms.Binding("Value", global::SimpleServer.Properties.Settings.Default, "BufferSize", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+			this.ctrlBufferSize.Location = new System.Drawing.Point(83, 19);
+			this.ctrlBufferSize.Maximum = new decimal(new int[] {
+            65536,
+            0,
+            0,
+            0});
+			this.ctrlBufferSize.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+			this.ctrlBufferSize.Name = "ctrlBufferSize";
+			this.ctrlBufferSize.Size = new System.Drawing.Size(80, 21);
+			this.ctrlBufferSize.TabIndex = 4;
+			this.ctrlBufferSize.Value = global::SimpleServer.Properties.Settings.Default.BufferSize;
+			// 
+			// labelBufferSize
+			// 
+			this.labelBufferSize.AutoSize = true;
+			this.labelBufferSize.Location = new System.Drawing.Point(7, 21);
+			this.labelBufferSize.Name = "labelBufferSize";
+			this.labelBufferSize.Size = new System.Drawing.Size(70, 12);
+			this.labelBufferSize.TabIndex = 5;
+			this.labelBufferSize.Text = "Buffer Size:";
+			// 
+			// ctrlDataSize
+			// 
+			this.ctrlDataSize.DataBindings.Add(new System.Windows.Forms.Binding("Value", global::SimpleServer.Properties.Settings.Default, "DataSize", true, System.Windows.Forms.DataSourceUpdateMode.OnPropertyChanged));
+			this.ctrlDataSize.Location = new System.Drawing.Point(83, 46);
+			this.ctrlDataSize.Maximum = new decimal(new int[] {
+            65536,
+            0,
+            0,
+            0});
+			this.ctrlDataSize.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+			this.ctrlDataSize.Name = "ctrlDataSize";
+			this.ctrlDataSize.Size = new System.Drawing.Size(80, 21);
+			this.ctrlDataSize.TabIndex = 5;
+			this.ctrlDataSize.Value = global::SimpleServer.Properties.Settings.Default.DataSize;
+			// 
+			// labelDataSize
+			// 
+			this.labelDataSize.AutoSize = true;
+			this.labelDataSize.Location = new System.Drawing.Point(7, 48);
+			this.labelDataSize.Name = "labelDataSize";
+			this.labelDataSize.Size = new System.Drawing.Size(34, 12);
+			this.labelDataSize.TabIndex = 0;
+			this.labelDataSize.Text = "Size:";
+			// 
+			// groupBoxSocket
+			// 
+			this.groupBoxSocket.Controls.Add(this.buttonDisconnect);
+			this.groupBoxSocket.Controls.Add(this.buttonSend);
+			this.groupBoxSocket.Controls.Add(this.buttonConnect);
+			this.groupBoxSocket.Controls.Add(this.buttonListen);
+			this.groupBoxSocket.Location = new System.Drawing.Point(12, 452);
+			this.groupBoxSocket.Name = "groupBoxSocket";
+			this.groupBoxSocket.Size = new System.Drawing.Size(514, 100);
+			this.groupBoxSocket.TabIndex = 3;
+			this.groupBoxSocket.TabStop = false;
+			this.groupBoxSocket.Text = "Socket";
+			// 
+			// buttonSend
+			// 
+			this.buttonSend.Location = new System.Drawing.Point(89, 20);
+			this.buttonSend.Name = "buttonSend";
+			this.buttonSend.Size = new System.Drawing.Size(75, 23);
+			this.buttonSend.TabIndex = 7;
+			this.buttonSend.Text = "Send";
+			this.buttonSend.UseVisualStyleBackColor = true;
+			this.buttonSend.Click += new System.EventHandler(this.buttonSend_Click);
+			// 
+			// buttonConnect
+			// 
+			this.buttonConnect.Location = new System.Drawing.Point(7, 51);
+			this.buttonConnect.Name = "buttonConnect";
+			this.buttonConnect.Size = new System.Drawing.Size(75, 23);
+			this.buttonConnect.TabIndex = 8;
+			this.buttonConnect.Text = "Connect";
+			this.buttonConnect.UseVisualStyleBackColor = true;
+			this.buttonConnect.Click += new System.EventHandler(this.buttonConnect_Click);
+			// 
+			// buttonListen
+			// 
+			this.buttonListen.Location = new System.Drawing.Point(7, 20);
+			this.buttonListen.Name = "buttonListen";
+			this.buttonListen.Size = new System.Drawing.Size(75, 23);
+			this.buttonListen.TabIndex = 6;
+			this.buttonListen.Text = "Listen";
+			this.buttonListen.UseVisualStyleBackColor = true;
+			this.buttonListen.Click += new System.EventHandler(this.buttonListen_Click);
+			// 
+			// buttonDisconnect
+			// 
+			this.buttonDisconnect.Location = new System.Drawing.Point(170, 21);
+			this.buttonDisconnect.Name = "buttonDisconnect";
+			this.buttonDisconnect.Size = new System.Drawing.Size(81, 23);
+			this.buttonDisconnect.TabIndex = 9;
+			this.buttonDisconnect.Text = "Disconnect";
+			this.buttonDisconnect.UseVisualStyleBackColor = true;
+			this.buttonDisconnect.Click += new System.EventHandler(this.buttonDisconnect_Click);
 			// 
 			// SimpleServerMainForm
 			// 
@@ -282,13 +294,13 @@
 			this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.SimpleServerMainForm_FormClosed);
 			this.groupBoxServer.ResumeLayout(false);
 			this.groupBoxServer.PerformLayout();
-			this.groupBoxData.ResumeLayout(false);
-			this.groupBoxData.PerformLayout();
-			this.groupBoxSocket.ResumeLayout(false);
-			((System.ComponentModel.ISupportInitialize)(this.ctrlBufferSize)).EndInit();
-			((System.ComponentModel.ISupportInitialize)(this.ctrlDataSize)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.ctrlBacklogSize)).EndInit();
 			((System.ComponentModel.ISupportInitialize)(this.ctrlServerPort)).EndInit();
+			this.groupBoxData.ResumeLayout(false);
+			this.groupBoxData.PerformLayout();
+			((System.ComponentModel.ISupportInitialize)(this.ctrlBufferSize)).EndInit();
+			((System.ComponentModel.ISupportInitialize)(this.ctrlDataSize)).EndInit();
+			this.groupBoxSocket.ResumeLayout(false);
 			this.ResumeLayout(false);
 
 		}
@@ -312,6 +324,7 @@
 		private System.Windows.Forms.Button buttonSend;
 		private System.Windows.Forms.NumericUpDown ctrlBufferSize;
 		private System.Windows.Forms.Label labelBufferSize;
+		private System.Windows.Forms.Button buttonDisconnect;
 	}
 }
 

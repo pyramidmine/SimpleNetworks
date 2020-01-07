@@ -7,7 +7,7 @@ namespace SimpleServer
 {
 	public class Connector
 	{
-		public event EventHandler<SocketAsyncEventArgs> Completed;
+		public event EventHandler<SocketAsyncEventArgs> ConnectedCallback;
 
 		Socket socket;
 		ILogger logger;
@@ -44,8 +44,8 @@ namespace SimpleServer
 
 		void ConnectCompleted(object sender, SocketAsyncEventArgs args)
 		{
-			this.logger?.AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}, SocketError={args.SocketError}");
-			this.Completed?.Invoke(this, args);
+			this.logger?.AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}, SocketError={args.SocketError}, this.socket.GetHashCode()={this.socket.GetHashCode()}, args.ConnectSocket.GetHashCode()={args.ConnectSocket.GetHashCode()}");
+			this.ConnectedCallback?.Invoke(this, args);
 		}
 	}
 }
