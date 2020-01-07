@@ -27,6 +27,7 @@ namespace SimpleServer
 
 			this.sendArgs = new SocketAsyncEventArgs();
 			this.sendArgs.AcceptSocket = socket;
+			this.sendArgs.Completed += new EventHandler<SocketAsyncEventArgs>(SendCompleted);
 			this.sendArgs.SetBuffer(new byte[bufferSize], 0, bufferSize);
 		}
 
@@ -76,6 +77,53 @@ namespace SimpleServer
 
 			// 다음 패킷 받기
 			StartReceive();
+		}
+
+		public void SendData(byte[] buffer)
+		{
+			this.logger?.AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}");
+
+			try
+			{
+				Buffer.BlockCopy(buffer, 0, this.sendArgs.Buffer, 0, buffer.Length);
+				this.sendArgs.SetBuffer(0, buffer.Length);
+				bool pending = this.sendArgs.AcceptSocket.SendAsync(this.sendArgs);
+				if (!pending)
+				{
+					SendCompleted(null, this.sendArgs);
+				}
+			}
+			catch (Exception ex)
+			{
+				this.logger?.AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}, {ex.GetType().Name}, {ex.Message}");
+			}
+		}
+
+		void SendCompleted(object sender, SocketAsyncEventArgs args)
+		{
+			this.logger?.AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}");
+
+			if (args.SocketError != SocketError.Success)
+			{
+				this.logger?.AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}, Close socket: SocketError={args.SocketError}");
+				CloseClientSocket(args);
+				return;
+			}
+
+			if (args.BytesTransferred == 0)
+			{
+				this.logger?.AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}, Close socket: BytesTransferred=0");
+				CloseClientSocket(args);
+				return;
+			}
+
+			// 패킷 표시용 스트링
+			StringBuilder sb = new StringBuilder(args.BytesTransferred * 2);
+			for (int i = 0; i < args.BytesTransferred; i++)
+			{
+				sb.AppendFormat($"{args.Buffer[i]:x2}");
+			}
+			this.logger?.AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}, BytesTransferred={args.BytesTransferred}, Packet={sb.ToString()}");
 		}
 
 		void CloseClientSocket(SocketAsyncEventArgs args)

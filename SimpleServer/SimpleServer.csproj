@@ -39,6 +39,7 @@
     <Reference Include="System.Windows.Forms" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Connector.cs" />
     <Compile Include="Listener.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="Session.cs" />

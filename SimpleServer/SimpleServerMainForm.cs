@@ -14,15 +14,13 @@ namespace SimpleServer
 	{
 		readonly int MAX_LOG_ROWS = 4096;
 
+		// Listener (for Server)
 		Listener listener;
 		List<Session> sessions = new List<Session>();
 
-		Socket socket;
-		Socket clientSocket;
-		SocketAsyncEventArgs saea;
-
-		SocketAsyncEventArgs receiveArgs;
-		SocketAsyncEventArgs sendArgs;
+		// Connector (for Client)
+		Connector connector;
+		Session session;
 
 		public SimpleServerMainForm()
 		{
@@ -62,9 +60,6 @@ namespace SimpleServer
 		{
 			AddLog($"{MethodBase.GetCurrentMethod().Name}");
 
-			//
-			// Listen directly
-			//
 			try
 			{
 				this.listener = new Listener(this);
@@ -83,12 +78,9 @@ namespace SimpleServer
 
 			try
 			{
-				this.socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-				this.saea = new SocketAsyncEventArgs();
-				this.saea.AcceptSocket = this.socket;
-				this.saea.Completed += new EventHandler<SocketAsyncEventArgs>(ConnectCompleted);
-				this.saea.RemoteEndPoint = new IPEndPoint(IPAddress.Parse(Properties.Settings.Default.ServerIp), Properties.Settings.Default.ServerPort);
-				StartConnect(this.saea);
+				this.connector = new Connector(this);
+				this.connector.Completed += new EventHandler<SocketAsyncEventArgs>(ConnectCompleted);
+				this.connector.Connect(Properties.Settings.Default.ServerIp, Properties.Settings.Default.ServerPort);
 			}
 			catch (Exception ex)
 			{
@@ -102,20 +94,18 @@ namespace SimpleServer
 
 			try
 			{
-				if (this.sendArgs.AcceptSocket != null)
+				if (this.session != null)
 				{
 					byte[] sourceBuffer = new byte[Properties.Settings.Default.DataSize];
 					for (int i = 0; i < sourceBuffer.Length; i++)
 					{
 						sourceBuffer[i] = (byte)((i + 1) % 10);
 					}
-					Buffer.BlockCopy(sourceBuffer, 0, this.sendArgs.Buffer, 0, sourceBuffer.Length);
-					this.sendArgs.SetBuffer(0, sourceBuffer.Length);
-					StartSend(this.sendArgs);
+					this.session.SendData(sourceBuffer);
 				}
 				else
 				{
-					AddLog($"{MethodBase.GetCurrentMethod().Name}, Socket=null");
+					AddLog($"{MethodBase.GetCurrentMethod().Name}, Session is null.");
 				}
 			}
 			catch (Exception ex)
@@ -128,20 +118,9 @@ namespace SimpleServer
 		{
 			AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}");
 
-			Session session = new Session(args.AcceptSocket, Properties.Settings.Default.BufferSize, this);
-			this.sessions.Add(session);
-			Task.Factory.StartNew(session.StartReceive);
-		}
-
-		void StartConnect(SocketAsyncEventArgs args)
-		{
-			AddLog($"{MethodBase.GetCurrentMethod().Name}");
-
-			bool pending = args.AcceptSocket.ConnectAsync(args);
-			if (!pending)
-			{
-				ConnectCompleted(null, args);
-			}
+			Session newSession = new Session(args.AcceptSocket, Properties.Settings.Default.BufferSize, this);
+			this.sessions.Add(newSession);
+			Task.Factory.StartNew(newSession.StartReceive);
 		}
 
 		void ConnectCompleted(object sender, SocketAsyncEventArgs args)
@@ -150,21 +129,19 @@ namespace SimpleServer
 
 			if (args.SocketError == SocketError.Success)
 			{
-				this.receiveArgs = new SocketAsyncEventArgs();
-				this.receiveArgs.AcceptSocket = args.AcceptSocket;
-				this.receiveArgs.Completed += new EventHandler<SocketAsyncEventArgs>(ReceiveCompleted);
-				this.receiveArgs.RemoteEndPoint = new IPEndPoint(IPAddress.Parse(Properties.Settings.Default.ServerIp), Properties.Settings.Default.ServerPort);
-				this.receiveArgs.SetBuffer(new byte[Properties.Settings.Default.BufferSize], 0, Properties.Settings.Default.BufferSize);
-				this.sendArgs = new SocketAsyncEventArgs();
-				this.sendArgs.AcceptSocket = args.AcceptSocket;
-				this.sendArgs.Completed += new EventHandler<SocketAsyncEventArgs>(SendCompleted);
-				this.sendArgs.RemoteEndPoint = new IPEndPoint(IPAddress.Parse(Properties.Settings.Default.ServerIp), Properties.Settings.Default.ServerPort);
-				this.sendArgs.SetBuffer(new byte[Properties.Settings.Default.BufferSize], 0, Properties.Settings.Default.BufferSize);
-				StartReceive(this.receiveArgs);
+				this.session = new Session(args.ConnectSocket, Properties.Settings.Default.BufferSize, this);
+				Task.Factory.StartNew(this.session.StartReceive);
 			}
 			else
 			{
-				// ConnectionRefused: 리스닝 하고 있지 않은 포트로 커넥트 시도
+				try
+				{
+					args.ConnectSocket?.Shutdown(SocketShutdown.Both);
+				}
+				catch
+				{
+				}
+				args.ConnectSocket?.Close();
 			}
 		}
 
