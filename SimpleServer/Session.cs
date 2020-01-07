@@ -10,6 +10,9 @@ namespace SimpleServer
 {
 	class Session
 	{
+		public event EventHandler<SocketAsyncEventArgs> ReceivedCallback;
+		public event EventHandler<SocketAsyncEventArgs> ClosedCallback;
+
 		SocketAsyncEventArgs receiveArgs;
 		SocketAsyncEventArgs sendArgs;
 		ILogger logger;
@@ -66,6 +69,8 @@ namespace SimpleServer
 				CloseClientSocket(args);
 				return;
 			}
+
+			this.ReceivedCallback?.Invoke(this, args);
 
 			// 패킷 표시용 스트링
 			StringBuilder sb = new StringBuilder(args.BytesTransferred * 2);
@@ -140,6 +145,8 @@ namespace SimpleServer
 			}
 
 			args.AcceptSocket?.Close();
+
+			this.ClosedCallback?.Invoke(this, args);
 		}
 	}
 }

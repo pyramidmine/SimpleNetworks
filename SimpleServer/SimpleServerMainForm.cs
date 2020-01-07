@@ -116,10 +116,12 @@ namespace SimpleServer
 
 		void ListenCompleted(object sender, SocketAsyncEventArgs args)
 		{
-			AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}");
+			AddLog($"{MethodBase.GetCurrentMethod().Name}");
 
 			Session newSession = new Session(args.AcceptSocket, Properties.Settings.Default.BufferSize, this);
+			newSession.ClosedCallback += new EventHandler<SocketAsyncEventArgs>(ClosedCallback);
 			this.sessions.Add(newSession);
+			AddLog($"{MethodBase.GetCurrentMethod().Name}, Session={newSession.GetHashCode()}, Accepted.");
 			Task.Factory.StartNew(newSession.StartReceive);
 		}
 
@@ -214,6 +216,17 @@ namespace SimpleServer
 		void SendCompleted(object sender, SocketAsyncEventArgs args)
 		{
 			AddLog($"{MethodBase.GetCurrentMethod().Name}, SocketError={args.SocketError}, BytesTransferred={args.BytesTransferred}");
+		}
+
+		void ClosedCallback(object sender, SocketAsyncEventArgs args)
+		{
+			AddLog($"{MethodBase.GetCurrentMethod().Name}");
+
+			Session closedSession = (Session)sender;
+			if (this.sessions.Remove(closedSession))
+			{
+				AddLog($"{MethodBase.GetCurrentMethod().Name}, Session={closedSession.GetHashCode()}, Closed.");
+			}
 		}
 
 		/// <summary>
