@@ -158,7 +158,7 @@ namespace SimpleServer
 			{
 				this.session = new Session(args.ConnectSocket, Properties.Settings.Default.BufferSize, this);
 				this.session.ReceivedCallback += new EventHandler<SocketAsyncEventArgs>(ReceivedCallback);
-				this.session.SentCallback += new EventHandler<SocketAsyncEventArgs>(SentCallback);
+				this.session.SentCallback += new Session.SentCallbackHandler(SentCallback);
 				this.session.ClosedCallback += new EventHandler<SocketAsyncEventArgs>(ClosedCallback);
 				Task.Factory.StartNew(this.session.StartReceive);
 			}
@@ -180,9 +180,9 @@ namespace SimpleServer
 			AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}, SocketError={args.SocketError}, BytesTransferred={args.BytesTransferred}");
 		}
 
-		void SentCallback(object sender, SocketAsyncEventArgs args)
+		void SentCallback(object sender, int bytesTransferred)
 		{
-			AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}, SocketError={args.SocketError}, BytesTransferred={args.BytesTransferred}");
+			AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}, BytesTransferred={bytesTransferred}");
 		}
 
 		void ClosedCallback(object sender, SocketAsyncEventArgs args)

@@ -10,7 +10,8 @@ namespace SimpleServer
 	class Session
 	{
 		public event EventHandler<SocketAsyncEventArgs> ReceivedCallback;
-		public event EventHandler<SocketAsyncEventArgs> SentCallback;
+		public delegate void SentCallbackHandler(object sender, int bytesTransferred);
+		public event SentCallbackHandler SentCallback;
 		public event EventHandler<SocketAsyncEventArgs> ClosedCallback;
 
 		SocketAsyncEventArgs receiveArgs;
@@ -157,16 +158,16 @@ namespace SimpleServer
 					// 패킷을 다 보냈으면 큐에서 제거
 					else
 					{
-						lock (this.sendQueue)
-						{
-							this.sendQueue.Dequeue();
-						}
 						this.sendPacketOffset = 0;
 						this.sendPacketLength = 0;
 						this.sendBufferOffset = 0;
 						this.sendBufferLength = 0;
 
-						// 남은 큐를 처리할 수 있도록 재귀호출
+						lock (this.sendQueue)
+						{
+							this.sendQueue.Dequeue();
+						}
+
 						StartSend();
 						return;
 					}
@@ -219,7 +220,7 @@ namespace SimpleServer
 			// 패킷 전송이 완료되면 콜백 호출
 			if (this.sendPacketOffset == this.sendPacketLength)
 			{
-				this.SentCallback?.Invoke(this, args);
+				this.SentCallback?.Invoke(this, this.sendPacketLength);
 			}
 
 			StartSend();
