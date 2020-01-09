@@ -94,18 +94,23 @@ namespace SimpleServer
 
 			try
 			{
+				byte[] sourceBuffer = new byte[Properties.Settings.Default.DataSize];
+				for (int i = 0; i < sourceBuffer.Length; i++)
+				{
+					sourceBuffer[i] = (byte)((i + 1) % 10);
+				}
+
 				if (this.session != null)
 				{
-					byte[] sourceBuffer = new byte[Properties.Settings.Default.DataSize];
-					for (int i = 0; i < sourceBuffer.Length; i++)
-					{
-						sourceBuffer[i] = (byte)((i + 1) % 10);
-					}
-					this.session.SendData(sourceBuffer);
+					this.session.SendData(10, 1, PacketDataType.PlainText, sourceBuffer);
+				}
+				else if (0 < this.sessions.Count)
+				{
+					this.sessions[0].SendData(11, 1, PacketDataType.PlainText, sourceBuffer);
 				}
 				else
 				{
-					AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}, Session is null.");
+					AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}, Session or Sessions are null.");
 				}
 			}
 			catch (Exception ex)

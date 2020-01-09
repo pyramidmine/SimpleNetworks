@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Diagnostics;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace SimpleServer
 {
@@ -17,6 +16,12 @@ namespace SimpleServer
 		SocketAsyncEventArgs receiveArgs;
 		SocketAsyncEventArgs sendArgs;
 		ILogger logger;
+
+		Queue<Packet> sendQueue = new Queue<Packet>();
+		int sendPacketOffset = 0;
+		int sendPacketLength = 0;
+		int sendBufferOffset = 0;
+		int sendBufferLength = 0;
 
 		public Session(Socket socket, int bufferSize, ILogger logger)
 		{
@@ -85,18 +90,102 @@ namespace SimpleServer
 			StartReceive();
 		}
 
-		public void SendData(byte[] buffer)
+		public void SendData(short packetType, byte packetVersion, PacketDataType packetDataType, byte[] buffer)
 		{
-			this.logger?.AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}");
+			this.logger?.AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}({packetType}, {packetVersion}, {packetDataType})");
 
 			try
 			{
-				Buffer.BlockCopy(buffer, 0, this.sendArgs.Buffer, 0, buffer.Length);
-				this.sendArgs.SetBuffer(0, buffer.Length);
+				Packet packet = new Packet(packetType, packetVersion, packetDataType, buffer);
+				lock (this.sendQueue)
+				{
+					this.sendQueue.Enqueue(packet);
+					if (this.sendQueue.Count == 1)
+					{
+						StartSend();
+					}
+				}
+			}
+			catch (Exception ex)
+			{
+				this.logger?.AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}, {ex.GetType().Name}, {ex.Message}");
+			}
+		}
+
+		void StartSend()
+		{
+			this.logger?.AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}");
+
+			Packet packet = null;
+
+			lock (this.sendQueue)
+			{
+				// 큐에 보낼 패킷이 있으면 peek (꺼내지는 않고 참조만)
+				if (0 < this.sendQueue.Count)
+				{
+					packet = this.sendQueue.Peek();
+					this.sendPacketLength = packet.PacketLength;
+				}
+				// 큐에 보낼 패킷이 없으면 리턴
+				else
+				{
+					return;
+				}
+			}
+
+			// 전송 시작이면 버퍼에 패킷 복사 후 전송
+			if (this.sendPacketOffset == 0 && this.sendBufferOffset == 0)
+			{
+				this.sendBufferLength = Math.Min(this.sendPacketLength - this.sendPacketOffset, this.sendArgs.Buffer.Length);
+				Buffer.BlockCopy(packet.PacketData, this.sendPacketOffset, this.sendArgs.Buffer, this.sendBufferOffset, this.sendBufferLength);
+				this.sendArgs.SetBuffer(0, this.sendBufferLength);
+			}
+			// 전송 진행 중
+			else if (0 < this.sendBufferOffset)
+			{
+				// 버퍼를 모두 소진했나?
+				if (this.sendBufferOffset == this.sendBufferLength)
+				{
+					// 보낼 패킷 데이터가 남아있나?
+					if (this.sendPacketOffset < this.sendPacketLength)
+					{
+						this.sendBufferOffset = 0;
+						this.sendBufferLength = Math.Min(this.sendPacketLength - this.sendPacketOffset, this.sendArgs.Buffer.Length);
+						Buffer.BlockCopy(packet.PacketData, this.sendPacketOffset, this.sendArgs.Buffer, this.sendBufferOffset, this.sendBufferLength);
+						this.sendArgs.SetBuffer(0, this.sendBufferLength);
+					}
+					// 패킷을 다 보냈으면 큐에서 제거
+					else
+					{
+						lock (this.sendQueue)
+						{
+							this.sendQueue.Dequeue();
+						}
+						this.sendPacketOffset = 0;
+						this.sendPacketLength = 0;
+						this.sendBufferOffset = 0;
+						this.sendBufferLength = 0;
+
+						// 남은 큐를 처리할 수 있도록 재귀호출
+						StartSend();
+						return;
+					}
+				}
+				// 보낼 버퍼가 아직 있나?
+				else
+				{
+					// 남은 버퍼 부분을 전송
+					this.sendArgs.SetBuffer(this.sendBufferOffset, this.sendBufferLength - this.sendBufferOffset);
+				}
+			}
+
+			// 비동기 전송 시작
+			try
+			{
 				bool pending = this.sendArgs.AcceptSocket.SendAsync(this.sendArgs);
 				if (!pending)
 				{
-					SendCompleted(null, this.sendArgs);
+					SendCompleted(this, this.sendArgs);
 				}
 			}
 			catch (Exception ex)
@@ -123,15 +212,17 @@ namespace SimpleServer
 				return;
 			}
 
-			this.SentCallback?.Invoke(this, args);
-
-			// 패킷 표시용 스트링
-			StringBuilder sb = new StringBuilder(args.BytesTransferred * 2);
-			for (int i = 0; i < args.BytesTransferred; i++)
+			// 보낸 데이터 크기만큼 오프셋 변경
+			this.sendPacketOffset += args.BytesTransferred;
+			this.sendBufferOffset += args.BytesTransferred;
+			
+			// 패킷 전송이 완료되면 콜백 호출
+			if (this.sendPacketOffset == this.sendPacketLength)
 			{
-				sb.AppendFormat($"{args.Buffer[i]:x2}");
+				this.SentCallback?.Invoke(this, args);
 			}
-			this.logger?.AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}, BytesTransferred={args.BytesTransferred}, Packet={sb.ToString()}");
+
+			StartSend();
 		}
 
 		public void Disconnect()
