@@ -42,10 +42,11 @@
 			this.ctrlDataSize = new System.Windows.Forms.NumericUpDown();
 			this.labelDataSize = new System.Windows.Forms.Label();
 			this.groupBoxSocket = new System.Windows.Forms.GroupBox();
+			this.buttonDisconnect = new System.Windows.Forms.Button();
 			this.buttonSend = new System.Windows.Forms.Button();
 			this.buttonConnect = new System.Windows.Forms.Button();
 			this.buttonListen = new System.Windows.Forms.Button();
-			this.buttonDisconnect = new System.Windows.Forms.Button();
+			this.buttonSendX = new System.Windows.Forms.Button();
 			this.groupBoxServer.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.ctrlBacklogSize)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.ctrlServerPort)).BeginInit();
@@ -229,6 +230,7 @@
 			// groupBoxSocket
 			// 
 			this.groupBoxSocket.Controls.Add(this.buttonDisconnect);
+			this.groupBoxSocket.Controls.Add(this.buttonSendX);
 			this.groupBoxSocket.Controls.Add(this.buttonSend);
 			this.groupBoxSocket.Controls.Add(this.buttonConnect);
 			this.groupBoxSocket.Controls.Add(this.buttonListen);
@@ -239,12 +241,22 @@
 			this.groupBoxSocket.TabStop = false;
 			this.groupBoxSocket.Text = "Socket";
 			// 
+			// buttonDisconnect
+			// 
+			this.buttonDisconnect.Location = new System.Drawing.Point(170, 20);
+			this.buttonDisconnect.Name = "buttonDisconnect";
+			this.buttonDisconnect.Size = new System.Drawing.Size(81, 23);
+			this.buttonDisconnect.TabIndex = 10;
+			this.buttonDisconnect.Text = "Disconnect";
+			this.buttonDisconnect.UseVisualStyleBackColor = true;
+			this.buttonDisconnect.Click += new System.EventHandler(this.buttonDisconnect_Click);
+			// 
 			// buttonSend
 			// 
 			this.buttonSend.Location = new System.Drawing.Point(89, 20);
 			this.buttonSend.Name = "buttonSend";
 			this.buttonSend.Size = new System.Drawing.Size(75, 23);
-			this.buttonSend.TabIndex = 7;
+			this.buttonSend.TabIndex = 8;
 			this.buttonSend.Text = "Send";
 			this.buttonSend.UseVisualStyleBackColor = true;
 			this.buttonSend.Click += new System.EventHandler(this.buttonSend_Click);
@@ -254,7 +266,7 @@
 			this.buttonConnect.Location = new System.Drawing.Point(7, 51);
 			this.buttonConnect.Name = "buttonConnect";
 			this.buttonConnect.Size = new System.Drawing.Size(75, 23);
-			this.buttonConnect.TabIndex = 8;
+			this.buttonConnect.TabIndex = 7;
 			this.buttonConnect.Text = "Connect";
 			this.buttonConnect.UseVisualStyleBackColor = true;
 			this.buttonConnect.Click += new System.EventHandler(this.buttonConnect_Click);
@@ -269,15 +281,15 @@
 			this.buttonListen.UseVisualStyleBackColor = true;
 			this.buttonListen.Click += new System.EventHandler(this.buttonListen_Click);
 			// 
-			// buttonDisconnect
+			// buttonSendX
 			// 
-			this.buttonDisconnect.Location = new System.Drawing.Point(170, 21);
-			this.buttonDisconnect.Name = "buttonDisconnect";
-			this.buttonDisconnect.Size = new System.Drawing.Size(81, 23);
-			this.buttonDisconnect.TabIndex = 9;
-			this.buttonDisconnect.Text = "Disconnect";
-			this.buttonDisconnect.UseVisualStyleBackColor = true;
-			this.buttonDisconnect.Click += new System.EventHandler(this.buttonDisconnect_Click);
+			this.buttonSendX.Location = new System.Drawing.Point(88, 51);
+			this.buttonSendX.Name = "buttonSendX";
+			this.buttonSendX.Size = new System.Drawing.Size(75, 23);
+			this.buttonSendX.TabIndex = 9;
+			this.buttonSendX.Text = "SendX";
+			this.buttonSendX.UseVisualStyleBackColor = true;
+			this.buttonSendX.Click += new System.EventHandler(this.buttonSendX_Click);
 			// 
 			// SimpleServerMainForm
 			// 
@@ -325,6 +337,7 @@
 		private System.Windows.Forms.NumericUpDown ctrlBufferSize;
 		private System.Windows.Forms.Label labelBufferSize;
 		private System.Windows.Forms.Button buttonDisconnect;
+		private System.Windows.Forms.Button buttonSendX;
 	}
 }
 

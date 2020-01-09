@@ -119,6 +119,11 @@ namespace SimpleServer
 			}
 		}
 
+		private void buttonSendX_Click(object sender, EventArgs e)
+		{
+
+		}
+
 		private void buttonDisconnect_Click(object sender, EventArgs e)
 		{
 			AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}");
@@ -144,6 +149,8 @@ namespace SimpleServer
 			AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}");
 
 			Session newSession = new Session(args.AcceptSocket, Properties.Settings.Default.BufferSize, this);
+			newSession.ReceivedCallback += new EventHandler<Packet>(ReceivedCallback);
+			newSession.SentCallback += new EventHandler<int>(SentCallback);
 			newSession.ClosedCallback += new EventHandler<SocketAsyncEventArgs>(ClosedCallback);
 			this.sessions.Add(newSession);
 			AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}, Session={newSession.GetHashCode()}, Accepted.");
@@ -157,8 +164,8 @@ namespace SimpleServer
 			if (args.SocketError == SocketError.Success)
 			{
 				this.session = new Session(args.ConnectSocket, Properties.Settings.Default.BufferSize, this);
-				this.session.ReceivedCallback += new EventHandler<SocketAsyncEventArgs>(ReceivedCallback);
-				this.session.SentCallback += new Session.SentCallbackHandler(SentCallback);
+				this.session.ReceivedCallback += new EventHandler<Packet>(ReceivedCallback);
+				this.session.SentCallback += new EventHandler<int>(SentCallback);
 				this.session.ClosedCallback += new EventHandler<SocketAsyncEventArgs>(ClosedCallback);
 				Task.Factory.StartNew(this.session.StartReceive);
 			}
@@ -175,9 +182,9 @@ namespace SimpleServer
 			}
 		}
 
-		void ReceivedCallback(object sender, SocketAsyncEventArgs args)
+		void ReceivedCallback(object sender, Packet packet)
 		{
-			AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}, SocketError={args.SocketError}, BytesTransferred={args.BytesTransferred}");
+			AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}, Packet, Length={packet.PacketLength}, Type={packet.PacketType}, Version={packet.PacketVersion}, DataType={packet.PacketDataType.ToString()}");
 		}
 
 		void SentCallback(object sender, int bytesTransferred)
@@ -195,6 +202,5 @@ namespace SimpleServer
 				AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}, Session={closedSession.GetHashCode()}, Closed.");
 			}
 		}
-
 	}
 }

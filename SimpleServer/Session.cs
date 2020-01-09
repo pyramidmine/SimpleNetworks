@@ -9,21 +9,28 @@ namespace SimpleServer
 {
 	class Session
 	{
-		public event EventHandler<SocketAsyncEventArgs> ReceivedCallback;
-		public delegate void SentCallbackHandler(object sender, int bytesTransferred);
-		public event SentCallbackHandler SentCallback;
+		// 패킷을 받았을 때 호출되는 콜백
+		public event EventHandler<Packet> ReceivedCallback;
+		// 패킷을 보냈을 때 호출되는 콜백
+		public event EventHandler<int> SentCallback;
+		// 소켓이 닫힐 때 호출되는 콜백
 		public event EventHandler<SocketAsyncEventArgs> ClosedCallback;
-
+				
 		SocketAsyncEventArgs receiveArgs;
 		SocketAsyncEventArgs sendArgs;
 		ILogger logger;
 
 		Queue<Packet> sendQueue = new Queue<Packet>();
-		int sendPacketOffset = 0;
-		int sendPacketLength = 0;
-		int sendBufferOffset = 0;
-		int sendBufferLength = 0;
+		int sendPacketOffset;
+		int sendPacketLength;
+		int sendBufferOffset;
+		int sendBufferLength;
 
+		byte[] recvPacket;
+		int recvPacketOffset;
+		int recvPacketLength;
+		byte[] recvPacketLengthBuffer;
+		
 		public Session(Socket socket, int bufferSize, ILogger logger)
 		{
 			logger?.AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}");
@@ -77,15 +84,89 @@ namespace SimpleServer
 				return;
 			}
 
-			this.ReceivedCallback?.Invoke(this, args);
+			int recvBufferOffset = 0;
+			int recvBufferLength = args.BytesTransferred;
 
-			// 패킷 표시용 스트링
-			StringBuilder sb = new StringBuilder(args.BytesTransferred * 2);
-			for (int i = 0; i < args.BytesTransferred; i++)
+			while (0 < (recvBufferLength - recvBufferOffset))
 			{
-				sb.AppendFormat($"{args.Buffer[i]:x2}");
+				// 수신 시작이면 패킷을 새로 받는 경우
+				if (this.recvPacketOffset == 0)
+				{
+					// 버퍼에 남은 부분이 패킷 길이 이상인가?
+					if (Packet.PACKET_LENGTH_TYPE_SIZE <= (recvBufferLength - recvBufferOffset))
+					{
+						// 받아야 하는 패킷 전체 길이만큼 버퍼 생성하고 복사
+						this.recvPacketLength = BitConverter.ToInt32(args.Buffer, args.Offset + recvBufferOffset);
+						this.recvPacket = new byte[this.recvPacketLength];
+						int count = Math.Min(this.recvPacketLength, (recvBufferLength - recvBufferOffset));
+						Buffer.BlockCopy(args.Buffer, args.Offset + recvBufferOffset, this.recvPacket, this.recvPacketOffset, count);
+						this.recvPacketOffset += count;
+						recvBufferOffset += count;
+					}
+					else
+					{
+						// 패킷 길이 정보를 저장하기 시작
+						this.recvPacketLengthBuffer = new byte[Packet.PACKET_LENGTH_TYPE_SIZE];
+						int count = Math.Min(this.recvPacketLengthBuffer.Length, (recvBufferLength - recvBufferOffset));
+						Buffer.BlockCopy(args.Buffer, args.Offset + recvBufferOffset, this.recvPacketLengthBuffer, this.recvPacketOffset, count);
+						this.recvPacketLength = Packet.PACKET_LENGTH_TYPE_SIZE;
+						this.recvPacketOffset += count;
+						recvBufferOffset += count;
+					}
+				}
+				// 수신 데이터를 모두 소진하지 못한 경우 (패킷을 받는 중이거나 한 번에 여러 개의 패킷을 받은 경우)
+				else if (this.recvPacketOffset < this.recvPacketLength)
+				{
+					// 패킷 길이를 받고 있던 경우 (패킷 길이를 알아야 버퍼를 만들든 할 수 있으므로 이거 중요함)
+					if (this.recvPacketLengthBuffer != null)
+					{
+						// 패킷 길이를 완성할 수 있는 경우
+						if (Packet.PACKET_LENGTH_TYPE_SIZE <= this.recvPacketOffset + (recvBufferLength - recvBufferOffset))
+						{
+							// 패킷 길이 배열을 일단 완성
+							int count = this.recvPacketLength - this.recvPacketOffset;
+							Buffer.BlockCopy(args.Buffer, args.Offset + recvBufferOffset, this.recvPacketLengthBuffer, this.recvPacketOffset, count);
+							recvBufferOffset += count;
+
+							// 패킷 데이터 배열 새로 생성
+							this.recvPacketLength = BitConverter.ToInt32(this.recvPacketLengthBuffer, 0);
+							this.recvPacket = new byte[this.recvPacketLength];
+							Buffer.BlockCopy(this.recvPacketLengthBuffer, 0, this.recvPacket, 0, this.recvPacketLengthBuffer.Length);
+							this.recvPacketOffset = this.recvPacketLengthBuffer.Length;
+							this.recvPacketLengthBuffer = null;
+						}
+						// 여전히 패킷 길이를 완성하지 못한 경우 (계속 이렇게 보낼 거야?)
+						else
+						{
+							// 패킷 길이 배열에 복사
+							int count = recvBufferLength - recvBufferOffset;
+							Buffer.BlockCopy(args.Buffer, args.Offset + recvBufferOffset, this.recvPacketLengthBuffer, this.recvPacketOffset, count);
+							this.recvPacketOffset += count;
+							recvBufferOffset += count;
+						}
+					}
+					// 패킷 본체를 받고 있는 경우
+					else
+					{
+						int count = Math.Min(this.recvPacketLength - this.recvPacketOffset, recvBufferLength - recvBufferOffset);
+						Buffer.BlockCopy(args.Buffer, args.Offset + recvBufferOffset, this.recvPacket, this.recvPacketOffset, count);
+						this.recvPacketOffset += count;
+						recvBufferOffset += count;
+					}
+				}
+
+				// 패킷이 완성됐으면 콜백 호출
+				if (this.recvPacketOffset == this.recvPacketLength)
+				{
+					this.ReceivedCallback?.Invoke(this, new Packet(this.recvPacket));
+
+					// 패킷을 새로 수신하기 위해 진행 정보 리셋
+					this.recvPacket = null;
+					this.recvPacketOffset = 0;
+					this.recvPacketLength = 0;
+					this.recvPacketLengthBuffer = null;
+				}
 			}
-			this.logger?.AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}, BytesTransferred={args.BytesTransferred}, Packet={sb.ToString()}");
 
 			// 다음 패킷 받기
 			StartReceive();
