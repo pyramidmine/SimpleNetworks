@@ -42,6 +42,7 @@
     <Compile Include="Connector.cs" />
     <Compile Include="Listener.cs" />
     <Compile Include="Logger.cs" />
+    <Compile Include="Message.cs" />
     <Compile Include="Packet.cs" />
     <Compile Include="Session.cs" />
     <Compile Include="SimpleServerMainForm.cs">

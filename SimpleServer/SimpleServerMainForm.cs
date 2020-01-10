@@ -102,11 +102,11 @@ namespace SimpleServer
 
 				if (this.session != null)
 				{
-					this.session.SendData(10, 1, PacketDataType.PlainText, sourceBuffer);
+					this.session.SendData(sourceBuffer);
 				}
 				else if (0 < this.sessions.Count)
 				{
-					this.sessions[0].SendData(11, 1, PacketDataType.PlainText, sourceBuffer);
+					this.sessions[0].SendData(sourceBuffer);
 				}
 				else
 				{
@@ -144,7 +144,7 @@ namespace SimpleServer
 			AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}");
 
 			Session newSession = new Session(args.AcceptSocket, Properties.Settings.Default.BufferSize, this);
-			newSession.ReceivedCallback += new EventHandler<Packet>(ReceivedCallback);
+			newSession.ReceivedCallback += new EventHandler<Message>(ReceivedCallback);
 			newSession.SentCallback += new EventHandler<int>(SentCallback);
 			newSession.ClosedCallback += new EventHandler<SocketAsyncEventArgs>(ClosedCallback);
 			this.sessions.Add(newSession);
@@ -159,7 +159,7 @@ namespace SimpleServer
 			if (args.SocketError == SocketError.Success)
 			{
 				this.session = new Session(args.ConnectSocket, Properties.Settings.Default.BufferSize, this);
-				this.session.ReceivedCallback += new EventHandler<Packet>(ReceivedCallback);
+				this.session.ReceivedCallback += new EventHandler<Message>(ReceivedCallback);
 				this.session.SentCallback += new EventHandler<int>(SentCallback);
 				this.session.ClosedCallback += new EventHandler<SocketAsyncEventArgs>(ClosedCallback);
 				Task.Factory.StartNew(this.session.StartReceive);
@@ -177,9 +177,15 @@ namespace SimpleServer
 			}
 		}
 
-		void ReceivedCallback(object sender, Packet packet)
+		void ReceivedCallback(object sender, SimpleServer.Message message)
 		{
-			AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}, Packet, Length={packet.PacketLength}, Type={packet.PacketType}, Version={packet.PacketVersion}, DataType={packet.PacketDataType.ToString()}");
+			AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}, Message, Length={message.MessageLength}, Reply={message.MessageReply}");
+
+			if (!message.MessageReply)
+			{
+				Session session = sender as Session;
+				session.SendData(message.MessageData, true, true);
+			}
 		}
 
 		void SentCallback(object sender, int bytesTransferred)
