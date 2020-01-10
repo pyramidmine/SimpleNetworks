@@ -46,7 +46,6 @@
 			this.buttonSend = new System.Windows.Forms.Button();
 			this.buttonConnect = new System.Windows.Forms.Button();
 			this.buttonListen = new System.Windows.Forms.Button();
-			this.buttonSendX = new System.Windows.Forms.Button();
 			this.groupBoxServer.SuspendLayout();
 			((System.ComponentModel.ISupportInitialize)(this.ctrlBacklogSize)).BeginInit();
 			((System.ComponentModel.ISupportInitialize)(this.ctrlServerPort)).BeginInit();
@@ -230,7 +229,6 @@
 			// groupBoxSocket
 			// 
 			this.groupBoxSocket.Controls.Add(this.buttonDisconnect);
-			this.groupBoxSocket.Controls.Add(this.buttonSendX);
 			this.groupBoxSocket.Controls.Add(this.buttonSend);
 			this.groupBoxSocket.Controls.Add(this.buttonConnect);
 			this.groupBoxSocket.Controls.Add(this.buttonListen);
@@ -281,16 +279,6 @@
 			this.buttonListen.UseVisualStyleBackColor = true;
 			this.buttonListen.Click += new System.EventHandler(this.buttonListen_Click);
 			// 
-			// buttonSendX
-			// 
-			this.buttonSendX.Location = new System.Drawing.Point(88, 51);
-			this.buttonSendX.Name = "buttonSendX";
-			this.buttonSendX.Size = new System.Drawing.Size(75, 23);
-			this.buttonSendX.TabIndex = 9;
-			this.buttonSendX.Text = "SendX";
-			this.buttonSendX.UseVisualStyleBackColor = true;
-			this.buttonSendX.Click += new System.EventHandler(this.buttonSendX_Click);
-			// 
 			// SimpleServerMainForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 12F);
@@ -337,7 +325,6 @@
 		private System.Windows.Forms.NumericUpDown ctrlBufferSize;
 		private System.Windows.Forms.Label labelBufferSize;
 		private System.Windows.Forms.Button buttonDisconnect;
-		private System.Windows.Forms.Button buttonSendX;
 	}
 }
 

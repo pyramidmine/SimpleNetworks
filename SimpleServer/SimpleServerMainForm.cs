@@ -119,11 +119,6 @@ namespace SimpleServer
 			}
 		}
 
-		private void buttonSendX_Click(object sender, EventArgs e)
-		{
-
-		}
-
 		private void buttonDisconnect_Click(object sender, EventArgs e)
 		{
 			AddLog($"{this.GetType().Name}.{MethodBase.GetCurrentMethod().Name}");
