@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Net.Sockets;
 using System.Reflection;
 using System.Text;
+using System.Threading;
 
 namespace SimpleServer
 {
@@ -25,6 +26,7 @@ namespace SimpleServer
 		int sndPacketLength;
 		int sndBufferOffset;
 		int sndBufferLength;
+		int sndJobCount;
 
 		byte[] rcvPacket;
 		int rcvPacketOffset;
@@ -178,12 +180,18 @@ namespace SimpleServer
 
 			try
 			{
+				// 메시지를 큐에 추가
 				Message message = new Message(data, dataIncludeHeader, reply);
 				lock (this.sendQueue)
 				{
 					this.sendQueue.Enqueue(message);
 				}
-				StartSend();
+
+				// 보내기 작업이 진행중이 아니면 전송 시작
+				if (Interlocked.CompareExchange(ref this.sndJobCount, 1, 0) == 0)
+				{
+					StartSend();
+				}
 			}
 			catch (Exception ex)
 			{
@@ -222,9 +230,18 @@ namespace SimpleServer
 			// 전송 진행 중
 			else if (0 < this.sndBufferOffset)
 			{
+				// 보낼 버퍼가 아직 있나?
+				if (this.sndBufferOffset < this.sndBufferLength)
+				{
+					// 남은 버퍼 부분을 전송
+					this.sendArgs.SetBuffer(this.sndBufferOffset, this.sndBufferLength - this.sndBufferOffset);
+				}
 				// 버퍼를 모두 소진했나?
 				if (this.sndBufferOffset == this.sndBufferLength)
 				{
+					// NOTE: 현재, 패킷/메시지 단위로 SendAsync 하기 때문에, 버퍼에는 여러개의 패킷이 들어가지 않으므로, 이 부분에 진입하면 버그!
+					Debug.Assert(false);
+
 					// 보낼 패킷 데이터가 남아있나?
 					if (this.sndPacketOffset < this.sndPacketLength)
 					{
@@ -233,29 +250,6 @@ namespace SimpleServer
 						Buffer.BlockCopy(message.MessageData, this.sndPacketOffset, this.sendArgs.Buffer, this.sndBufferOffset, this.sndBufferLength);
 						this.sendArgs.SetBuffer(0, this.sndBufferLength);
 					}
-					// 패킷을 다 보냈으면 큐에서 제거
-					else
-					{
-						this.sndPacketOffset = 0;
-						this.sndPacketLength = 0;
-						this.sndBufferOffset = 0;
-						this.sndBufferLength = 0;
-
-						lock (this.sendQueue)
-						{
-							this.sendQueue.Dequeue();
-						}
-
-						// 더 이상 보내지 않고 리턴
-						// 보내기를 계속하는 건 ReceivedCompleted에서 처리
-						return;
-					}
-				}
-				// 보낼 버퍼가 아직 있나?
-				else
-				{
-					// 남은 버퍼 부분을 전송
-					this.sendArgs.SetBuffer(this.sndBufferOffset, this.sndBufferLength - this.sndBufferOffset);
 				}
 			}
 
@@ -300,6 +294,24 @@ namespace SimpleServer
 			if (this.sndPacketOffset == this.sndPacketLength)
 			{
 				this.SentCallback?.Invoke(this, this.sndPacketLength);
+
+				// 큐를 비우고 송신 관련 변수 초기화
+				lock (this.sendQueue)
+				{
+					this.sendQueue.Dequeue();
+
+					this.sndPacketOffset = 0;
+					this.sndPacketLength = 0;
+					this.sndBufferOffset = 0;
+					this.sndBufferLength = 0;
+
+					// 큐가 비었으면 진행중인 송신 작업이 없다고 표시하고 리턴
+					if (this.sendQueue.Count == 0)
+					{
+						Interlocked.Decrement(ref this.sndJobCount);
+						return;
+					}
+				}
 			}
 
 			StartSend();
